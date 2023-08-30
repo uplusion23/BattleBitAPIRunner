@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Linq;
+using LogLevel = BattleBitAPI.Common.LogLevel;
 
 namespace BattleBitAPIRunner
 {
@@ -35,6 +36,8 @@ namespace BattleBitAPIRunner
             hookModules();
             fileWatchers();
             startServerListener();
+            var runnerRestServer = new RunnerRestServer(this.servers);
+            runnerRestServer.Initialize();
 
             consoleCommandHandler();
 

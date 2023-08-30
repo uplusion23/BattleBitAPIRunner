@@ -1,12 +1,7 @@
-﻿using BattleBitAPI.Common;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Net;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+using LogLevel = BattleBitAPI.Common.LogLevel;
 
 namespace BattleBitAPIRunner
 {
@@ -29,5 +24,10 @@ namespace BattleBitAPIRunner
         public string ConfigurationPath { get; set; } = "./configurations";
         public LogLevel LogLevel { get; set; } = LogLevel.None;
         public int WarningThreshold { get; set; } = 250;
+
+        /* REST Server Properties */
+        public IPAddress? RestServerIp { get; set; }
+
+        public int? RestServerPort { get; set; }
     }
 }
