@@ -17,11 +17,11 @@ namespace BattleBitAPIRunner
       Task.Run(() =>
             {
               WebApplicationBuilder builder = WebApplication.CreateBuilder(new string[] { });
-              // builder.Logging.ClearProviders(); 
+              builder.Logging.ClearProviders();
               WebApplication app = builder.Build();
 
               InitializeEndpoints(app);
-              app.UseDeveloperExceptionPage();
+              // app.UseDeveloperExceptionPage();
 
               app.RunAsync("http://*:8080");
               Console.WriteLine("Started REST server on port 8080");
@@ -143,17 +143,17 @@ namespace BattleBitAPIRunner
     private Module? FindModuleById(string moduleId)
     {
       // Refactor Program.cs to globally list BattleBitModules, so that way the getmodulebyid can be more specific and include server, isloaded, etc.
-      return Module.Modules.First(module => module.Id == moduleId);
+      return Module.Modules.FirstOrDefault(module => module.Id == moduleId);
     }
 
     private BattleBitModule? FindModuleById(RunnerServer server, string moduleId)
     {
-      return server.GetModules().First(module => (module.Name != null) && module.Id.Contains(moduleId));
+      return server.GetModules().FirstOrDefault(module => (module.Name != null) && module.Id.Contains(moduleId));
     }
 
     private BattleBitModule? FindModuleByName(RunnerServer server, string moduleName)
     {
-      return server.GetModules().First(module => (module.Name != null) && module.Name.Contains(moduleName));
+      return server.GetModules().FirstOrDefault(module => (module.Name != null) && module.Name.Contains(moduleName));
     }
   }
 }
