@@ -17,7 +17,7 @@ namespace BattleBitAPIRunner
       Task.Run(() =>
             {
               WebApplicationBuilder builder = WebApplication.CreateBuilder(new string[] { });
-              builder.Logging.ClearProviders();
+              // builder.Logging.ClearProviders(); 
               WebApplication app = builder.Build();
 
               InitializeEndpoints(app);
@@ -58,7 +58,7 @@ namespace BattleBitAPIRunner
         return ServerNotFoundResponse(serverId);
       }
 
-      BattleBitModule module = FindModuleById(foundServer, id);
+      BattleBitModule? module = FindModuleById(foundServer, id);
       if (module == null)
       {
         return ModuleNotFoundResponse($"[id:${id}]");
@@ -75,7 +75,7 @@ namespace BattleBitAPIRunner
         return ServerNotFoundResponse(serverId);
       }
 
-      BattleBitModule module = FindModuleByName(foundServer, name);
+      BattleBitModule? module = FindModuleByName(foundServer, name);
       if (module == null)
       {
         return ModuleNotFoundResponse($"[name:${name}]");
@@ -88,6 +88,18 @@ namespace BattleBitAPIRunner
       return Results.Ok(Module.Modules);
     }
 
+    private IResult GetModuleById(string moduleId)
+    {
+      Module? foundModule = this.FindModuleById(moduleId.ToString());
+
+      if (foundModule == null)
+      {
+        return ModuleNotFoundResponse($"[id:{moduleId}]");
+      }
+
+      return Results.Ok(foundModule);
+    }
+
     private void InitializeEndpoints(WebApplication app)
     {
       app.UseRouting();
@@ -98,6 +110,7 @@ namespace BattleBitAPIRunner
       // app.MapGet("/api/servers/{serverId}/modules/{name:alpha}", GetServerModulesByName);
       app.MapGet("/api/servers/{serverId}/modules/{moduleId}", GetServerModulesById);
       app.MapGet("/api/modules/", GetModules);
+      app.MapGet("/api/modules/{moduleId}", GetModuleById);
       app.MapFallback(() =>
       {
         return "{ \"error\": 404 }";
@@ -127,12 +140,18 @@ namespace BattleBitAPIRunner
       return this.servers.Find(ser => ser.ServerHash == serverId);
     }
 
-    private BattleBitModule FindModuleById(RunnerServer server, string moduleId)
+    private Module? FindModuleById(string moduleId)
+    {
+      // Refactor Program.cs to globally list BattleBitModules, so that way the getmodulebyid can be more specific and include server, isloaded, etc.
+      return Module.Modules.First(module => module.Id == moduleId);
+    }
+
+    private BattleBitModule? FindModuleById(RunnerServer server, string moduleId)
     {
       return server.GetModules().First(module => (module.Name != null) && module.Id.Contains(moduleId));
     }
 
-    private BattleBitModule FindModuleByName(RunnerServer server, string moduleName)
+    private BattleBitModule? FindModuleByName(RunnerServer server, string moduleName)
     {
       return server.GetModules().First(module => (module.Name != null) && module.Name.Contains(moduleName));
     }

@@ -46,6 +46,12 @@ namespace BattleBitAPIRunner
         [JsonIgnore]
         public Assembly? ModuleAssembly { get; private set; }
 
+        // Metadata
+        [JsonInclude]
+        public string Author { get; private set; } = "Unknown";
+        [JsonInclude]
+        public string Version { get; private set; } = "Unknown";
+
         private SyntaxTree syntaxTree;
         private string code;
 
@@ -78,6 +84,7 @@ namespace BattleBitAPIRunner
             this.syntaxTree = CSharpSyntaxTree.ParseText(code, null, this.ModuleFilePath, Encoding.UTF8);
             this.Name = this.getName();
             this.getDependencies();
+            this.readMetadata();
 
             Console.Write("Module ");
             Console.ForegroundColor = ConsoleColor.White;
@@ -85,6 +92,40 @@ namespace BattleBitAPIRunner
             Console.ResetColor();
             Console.WriteLine($" has {this.RequiredDependencies.Length} required and {this.OptionalDependencies.Length} optional dependencies");
             Console.WriteLine();
+        }
+
+        private void readMetadata()
+        {
+            SyntaxNode root = this.syntaxTree.GetRoot();
+            var firstClassNode = root.DescendantNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault();
+
+            if (firstClassNode != null)
+            {
+                var triviaList = firstClassNode.GetLeadingTrivia();
+                var xmlCommentTrivia = triviaList.FirstOrDefault(t => t.Kind() == SyntaxKind.SingleLineDocumentationCommentTrivia);
+
+                var xmlComment = xmlCommentTrivia.ToFullString();
+                var xElement = XElement.Parse("<root>" + xmlComment.Replace("///", "").Trim() + "</root>");
+                var summary = xElement.Element("summary");
+
+                if (summary != null)
+                {
+                    // Extract author and version
+                    var lines = summary.Value.Split("\n").Select(x => x.Trim()).ToArray();
+
+                    foreach (var line in lines)
+                    {
+                        if (line.StartsWith("Author:", StringComparison.OrdinalIgnoreCase))
+                        {
+                            this.Author = line.Substring(8).Trim();
+                        }
+                        else if (line.StartsWith("Version:", StringComparison.OrdinalIgnoreCase))
+                        {
+                            this.Version = line.Substring(8).Trim();
+                        }
+                    }
+                }
+            }
         }
 
         private void getDependencies()
