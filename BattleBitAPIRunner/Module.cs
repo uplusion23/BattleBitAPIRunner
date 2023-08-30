@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -18,18 +19,31 @@ namespace BattleBitAPIRunner
 {
     internal class Module
     {
+        // Used for the REST API for lookups.
+        [JsonInclude]
+        public string Id { get; private set; }
+        [JsonIgnore]
         private static List<Module> modules = new();
+        [JsonIgnore]
         public static IReadOnlyList<Module> Modules => modules;
         private static AssemblyLoadContext moduleContext = new AssemblyLoadContext("Modules", true);
-
+        [JsonIgnore]
         public AssemblyLoadContext? Context { get; private set; }
+        [JsonIgnore]
         public Type? ModuleType { get; private set; }
+        [JsonInclude]
         public string? Name { get; private set; }
+        [JsonInclude]
         public string[]? RequiredDependencies { get; private set; }
+        [JsonInclude]
         public string[]? OptionalDependencies { get; private set; }
+        [JsonIgnore]
         public byte[] AssemblyBytes { get; private set; }
+        [JsonIgnore]
         public byte[] PDBBytes { get; private set; }
+        [JsonInclude]
         public string ModuleFilePath { get; }
+        [JsonIgnore]
         public Assembly? ModuleAssembly { get; private set; }
 
         private SyntaxTree syntaxTree;
@@ -48,6 +62,7 @@ namespace BattleBitAPIRunner
 
         public Module(string moduleFilePath)
         {
+            this.Id = Guid.NewGuid().ToString();
             this.ModuleFilePath = moduleFilePath;
             this.initialize();
         }

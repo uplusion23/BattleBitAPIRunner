@@ -38,6 +38,11 @@ namespace BBRAPIModules
             return this.modules.FirstOrDefault(m => m.GetType() == type);
         }
 
+        public List<BattleBitModule> GetModules()
+        {
+            return this.modules;
+        }
+
         // TODO: this is fucked up and needs to be generalized
         private async Task<bool> invokeOnModulesWithBoolReturnValue(string method, params object?[] parameters)
         {

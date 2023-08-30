@@ -3,6 +3,7 @@ using BattleBitAPI.Common;
 using BattleBitAPI.Server;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
 [assembly: InternalsVisibleTo("BattleBitAPIRunner")]
 
@@ -10,6 +11,9 @@ namespace BBRAPIModules
 {
     public abstract class BattleBitModule
     {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        [JsonIgnore]
         public RunnerServer Server { get; private set; }
 
         public bool IsLoaded { get; internal set; }
