@@ -1,4 +1,6 @@
-using System.Linq;
+using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using BBRAPIModules;
 
 namespace BattleBitAPIRunner
@@ -21,7 +23,7 @@ namespace BattleBitAPIRunner
               WebApplication app = builder.Build();
 
               InitializeEndpoints(app);
-              // app.UseDeveloperExceptionPage();
+              app.UseDeveloperExceptionPage();
 
               app.RunAsync("http://*:8080");
               Console.WriteLine("Started REST server on port 8080");
@@ -30,14 +32,15 @@ namespace BattleBitAPIRunner
 
     private IResult GetRunnerServers()
     {
-      return Results.Ok(this.servers);
+      List<RunnerServerDTO> serverDTOs = this.servers.Select(GetServerDTO).ToList();
+      return Results.Ok(serverDTOs);
     }
 
     private IResult GetServer(ulong serverId)
     {
       RunnerServer? foundServer = FindServerByHash(serverId);
       return (foundServer != null)
-          ? Results.Ok(foundServer)
+          ? Results.Ok(GetServerDTO(foundServer))
           : ServerNotFoundResponse(serverId);
     }
 
@@ -155,5 +158,63 @@ namespace BattleBitAPIRunner
     {
       return server.GetModules().FirstOrDefault(module => (module.Name != null) && module.Name.Contains(moduleName));
     }
+
+    private RunnerServerDTO GetServerDTO(RunnerServer server)
+    {
+      Console.WriteLine(JsonSerializer.Serialize(server.GetModules()).ToString());
+      return new RunnerServerDTO
+      {
+        ServerHash = server.ServerHash,
+        IsConnected = server.IsConnected,
+        GameIP = server.GameIP.ToString(),
+        GamePort = server.GamePort,
+        IsPasswordProtected = server.IsPasswordProtected,
+        ServerName = server.ServerName,
+        Gamemode = server.Gamemode,
+        Map = server.Map,
+        MapSize = server.MapSize.ToString().Replace("_", ""),
+        Modules = server.GetModules(),
+        IsNight = server.DayNight.ToString() == "Night",
+        CurrentPlayerCount = server.CurrentPlayerCount,
+        InQueuePlayerCount = server.InQueuePlayerCount,
+        MaxPlayerCount = server.MaxPlayerCount,
+        LoadingScreenText = server.LoadingScreenText
+      };
+
+    }
+  }
+
+  public class RunnerServerDTO
+  {
+    public ulong ServerHash { get; set; }
+    public bool IsConnected { get; set; }
+
+    public bool HasActiveConnectionSession { get; set; }
+
+    public string GameIP { get; set; }
+
+    public int GamePort { get; set; }
+
+    public bool IsPasswordProtected { get; set; }
+
+    public string ServerName { get; set; }
+
+    public string Gamemode { get; set; }
+
+    public string Map { get; set; }
+
+    public string MapSize { get; set; }
+
+    public List<BattleBitModule> Modules { get; set; }
+
+    public bool IsNight { get; set; }
+
+    public int CurrentPlayerCount { get; set; }
+
+    public int InQueuePlayerCount { get; set; }
+
+    public int MaxPlayerCount { get; set; }
+
+    public string LoadingScreenText { get; set; }
   }
 }
