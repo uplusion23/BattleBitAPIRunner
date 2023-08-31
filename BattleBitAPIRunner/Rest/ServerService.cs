@@ -1,4 +1,5 @@
 using System.Text.Json;
+using BattleBitAPI;
 using BBRAPIModules;
 
 namespace BattleBitAPIRunner
@@ -87,6 +88,18 @@ namespace BattleBitAPIRunner
       return Results.Ok(foundModule);
     }
 
+    public IResult GetModulesByServer(RunnerServer server)
+    {
+      List<Module> modules = new();
+      // Module.Modules.All(module => module)
+      return Results.NoContent();
+    }
+
+    public IResult GetPlayersByServer(ulong serverId)
+    {
+      return Results.Ok(FindPlayersByServerId(serverId));
+    }
+
     private RunnerServer? FindServerByHash(ulong serverId)
     {
       return this._servers.Find(ser => ser.ServerHash == serverId);
@@ -106,6 +119,17 @@ namespace BattleBitAPIRunner
     private BattleBitModule? FindModuleByName(RunnerServer server, string moduleName)
     {
       return server.GetModules().FirstOrDefault(module => (module.Name != null) && module.Name.Contains(moduleName));
+    }
+
+    private List<RunnerPlayerDTO> FindPlayersByServerId(ulong serverId)
+    {
+      RunnerServer? server = FindServerByHash(serverId);
+      if (server == null)
+      {
+        return new List<RunnerPlayerDTO>();
+      }
+      List<RunnerPlayer> players = server.AllPlayers.ToList();
+      return players.Select(player => GetPlayerDTO(player)).ToList();
     }
 
     private RunnerServerDTO GetServerDTO(RunnerServer server)
@@ -129,7 +153,27 @@ namespace BattleBitAPIRunner
         MaxPlayerCount = server.MaxPlayerCount,
         LoadingScreenText = server.LoadingScreenText
       };
+    }
 
+    private RunnerPlayerDTO GetPlayerDTO(RunnerPlayer player)
+    {
+      return new RunnerPlayerDTO
+      {
+        SteamID = player.SteamID,
+        Name = player.Name,
+        IPAddress = player.IP.ToString(),
+        GameRole = player.Role.ToString(),
+        Team = player.Team.ToString(),
+        Squad = player.SquadName.ToString(),
+        IsSquadLeader = player.IsSquadLeader,
+        PingMs = player.PingMs,
+        SessionID = player.CurrentSessionID,
+        IsAlive = player.IsAlive,
+        Health = player.HP,
+        Position = player.Position,
+        InVehicle = player.InVehicle,
+        IsBleeding = player.IsBleeding
+      };
     }
 
     private IResult ServerNotFoundResponse(ulong serverId)

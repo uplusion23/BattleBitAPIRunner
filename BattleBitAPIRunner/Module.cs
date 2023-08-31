@@ -102,7 +102,7 @@ namespace BattleBitAPIRunner
             if (firstClassNode != null)
             {
                 var triviaList = firstClassNode.GetLeadingTrivia();
-                var xmlCommentTrivia = triviaList.FirstOrDefault(t => t.Kind() == SyntaxKind.SingleLineDocumentationCommentTrivia);
+                var xmlCommentTrivia = triviaList.FirstOrDefault(t => t.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia));
 
                 var xmlComment = xmlCommentTrivia.ToFullString();
                 var xElement = XElement.Parse("<root>" + xmlComment.Replace("///", "").Trim() + "</root>");

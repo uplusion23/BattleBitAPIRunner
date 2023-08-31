@@ -1,5 +1,7 @@
 
 
+using BBRAPIModules;
+
 namespace BattleBitAPIRunner
 {
   public interface IServerService
@@ -11,5 +13,7 @@ namespace BattleBitAPIRunner
     IResult GetServerModulesByName(ulong serverId, string name);
     IResult GetModules();
     IResult GetModuleById(string moduleId);
+    IResult GetModulesByServer(RunnerServer server);
+    IResult GetPlayersByServer(RunnerServer server);
   }
 }

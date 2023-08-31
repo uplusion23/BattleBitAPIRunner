@@ -35,9 +35,9 @@ namespace BattleBitAPIRunner
 
     private void InitializeEndpoints(WebApplication app)
     {
-
       app.MapGet("/api/servers", _serverService.GetRunnerServers);
       app.MapGet("/api/servers/{serverId}", _serverService.GetServer);
+      app.MapGet("/api/servers/{serverId}/players", _serverService.GetPlayersByServer);
       app.MapGet("/api/servers/{serverId}/modules", _serverService.GetServerModules);
       app.MapGet("/api/servers/{serverId}/modules/{moduleId}", _serverService.GetServerModulesById);
       app.MapGet("/api/modules/", _serverService.GetModules);
