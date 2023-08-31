@@ -29,6 +29,8 @@ namespace BattleBitAPIRunner
 
         public Program()
         {
+            var services = new ServiceCollection();
+
             loadConfiguration();
             validateConfiguration();
             loadDependencies();
@@ -36,8 +38,16 @@ namespace BattleBitAPIRunner
             hookModules();
             fileWatchers();
             startServerListener();
-            var runnerRestServer = new RunnerRestServer(this.servers);
-            runnerRestServer.Initialize();
+
+            services.AddSingleton<List<RunnerServer>>();
+            services.AddTransient<RunnerRestServer>();
+            services.AddTransient<IServerService, ServerService>();
+            services.AddLogging();
+
+            var serviceProvider = services.BuildServiceProvider();
+            var runnerRestServer = serviceProvider.GetService<RunnerRestServer>();
+
+            runnerRestServer.InitializeAsync().Wait();
 
             consoleCommandHandler();
 

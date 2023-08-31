@@ -1,42 +1,26 @@
-using System.Net;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using BBRAPIModules;
 
 namespace BattleBitAPIRunner
 {
-  internal class RunnerRestServer
+  public class ServerService : IServerService
   {
-    private List<RunnerServer> servers = new();
+    private readonly List<RunnerServer> _servers;
+    private readonly ILogger<ServerService> _logger;
 
-    public RunnerRestServer(List<RunnerServer> servers)
+    public ServerService(List<RunnerServer> servers, ILogger<ServerService> logger)
     {
-      this.servers = servers;
+      _servers = servers;
+      _logger = logger;
     }
 
-    public void Initialize()
+    public IResult GetRunnerServers()
     {
-      Task.Run(() =>
-            {
-              WebApplicationBuilder builder = WebApplication.CreateBuilder(new string[] { });
-              builder.Logging.ClearProviders();
-              WebApplication app = builder.Build();
-
-              InitializeEndpoints(app);
-              app.UseDeveloperExceptionPage();
-
-              app.RunAsync("http://*:8080");
-              Console.WriteLine("Started REST server on port 8080");
-            });
-    }
-
-    private IResult GetRunnerServers()
-    {
-      List<RunnerServerDTO> serverDTOs = this.servers.Select(GetServerDTO).ToList();
+      List<RunnerServerDTO> serverDTOs = this._servers.Select(GetServerDTO).ToList();
       return Results.Ok(serverDTOs);
     }
 
-    private IResult GetServer(ulong serverId)
+    public IResult GetServer(ulong serverId)
     {
       RunnerServer? foundServer = FindServerByHash(serverId);
       return (foundServer != null)
@@ -44,7 +28,7 @@ namespace BattleBitAPIRunner
           : ServerNotFoundResponse(serverId);
     }
 
-    private IResult GetServerModules(ulong serverId)
+    public IResult GetServerModules(ulong serverId)
     {
       RunnerServer? foundServer = FindServerByHash(serverId);
       return (foundServer != null)
@@ -52,7 +36,7 @@ namespace BattleBitAPIRunner
           : ServerNotFoundResponse(serverId);
     }
 
-    private IResult GetServerModulesById(ulong serverId, string id)
+    public IResult GetServerModulesById(ulong serverId, string id)
     {
       RunnerServer? foundServer = FindServerByHash(serverId);
 
@@ -69,7 +53,7 @@ namespace BattleBitAPIRunner
       return Results.Ok(module);
     }
 
-    private IResult GetServerModulesByName(ulong serverId, string name)
+    public IResult GetServerModulesByName(ulong serverId, string name)
     {
       RunnerServer? foundServer = FindServerByHash(serverId);
 
@@ -86,12 +70,12 @@ namespace BattleBitAPIRunner
       return Results.Ok(module);
     }
 
-    private IResult GetModules()
+    public IResult GetModules()
     {
       return Results.Ok(Module.Modules);
     }
 
-    private IResult GetModuleById(string moduleId)
+    public IResult GetModuleById(string moduleId)
     {
       Module? foundModule = this.FindModuleById(moduleId.ToString());
 
@@ -103,44 +87,9 @@ namespace BattleBitAPIRunner
       return Results.Ok(foundModule);
     }
 
-    private void InitializeEndpoints(WebApplication app)
-    {
-      app.UseRouting();
-
-      app.MapGet("/api/servers", GetRunnerServers);
-      app.MapGet("/api/servers/{serverId}", GetServer);
-      app.MapGet("/api/servers/{serverId}/modules", GetServerModules);
-      // app.MapGet("/api/servers/{serverId}/modules/{name:alpha}", GetServerModulesByName);
-      app.MapGet("/api/servers/{serverId}/modules/{moduleId}", GetServerModulesById);
-      app.MapGet("/api/modules/", GetModules);
-      app.MapGet("/api/modules/{moduleId}", GetModuleById);
-      app.MapFallback(() =>
-      {
-        return "{ \"error\": 404 }";
-      });
-    }
-
-    private IResult ServerNotFoundResponse(ulong serverId)
-    {
-      return Results.Json(new
-      {
-        message = $"Server by hash '{serverId}' not found."
-      }, null, null, 404);
-    }
-
-    private IResult ModuleNotFoundResponse(string moduleName)
-    {
-      return Results.Json(new
-      {
-        message = $"Module '{moduleName}' not found."
-      }, null, null, 404);
-    }
-
-    // These would be inside a service class but I'm new to C#
-
     private RunnerServer? FindServerByHash(ulong serverId)
     {
-      return this.servers.Find(ser => ser.ServerHash == serverId);
+      return this._servers.Find(ser => ser.ServerHash == serverId);
     }
 
     private Module? FindModuleById(string moduleId)
@@ -182,39 +131,21 @@ namespace BattleBitAPIRunner
       };
 
     }
-  }
 
-  public class RunnerServerDTO
-  {
-    public ulong ServerHash { get; set; }
-    public bool IsConnected { get; set; }
+    private IResult ServerNotFoundResponse(ulong serverId)
+    {
+      return Results.Json(new
+      {
+        message = $"Server by hash '{serverId}' not found."
+      }, null, null, 404);
+    }
 
-    public bool HasActiveConnectionSession { get; set; }
-
-    public string GameIP { get; set; }
-
-    public int GamePort { get; set; }
-
-    public bool IsPasswordProtected { get; set; }
-
-    public string ServerName { get; set; }
-
-    public string Gamemode { get; set; }
-
-    public string Map { get; set; }
-
-    public string MapSize { get; set; }
-
-    public List<BattleBitModule> Modules { get; set; }
-
-    public bool IsNight { get; set; }
-
-    public int CurrentPlayerCount { get; set; }
-
-    public int InQueuePlayerCount { get; set; }
-
-    public int MaxPlayerCount { get; set; }
-
-    public string LoadingScreenText { get; set; }
+    private IResult ModuleNotFoundResponse(string moduleName)
+    {
+      return Results.Json(new
+      {
+        message = $"Module '{moduleName}' not found."
+      }, null, null, 404);
+    }
   }
 }
