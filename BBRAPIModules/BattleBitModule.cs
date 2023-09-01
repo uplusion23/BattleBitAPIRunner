@@ -13,6 +13,12 @@ namespace BBRAPIModules
     {
         public string Id { get; set; }
         public string Name { get; set; }
+
+        // Metadata
+        [JsonInclude]
+        public string Author { get; set; } = "Unknown";
+        [JsonInclude]
+        public string Version { get; set; } = "Unknown";
         [JsonIgnore]
         public RunnerServer Server { get; private set; }
 

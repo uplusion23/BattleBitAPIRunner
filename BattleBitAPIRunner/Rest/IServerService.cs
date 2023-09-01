@@ -14,6 +14,6 @@ namespace BattleBitAPIRunner
     IResult GetModules();
     IResult GetModuleById(string moduleId);
     IResult GetModulesByServer(RunnerServer server);
-    IResult GetPlayersByServer(RunnerServer server);
+    IResult GetPlayersByServer(ulong serverId);
   }
 }

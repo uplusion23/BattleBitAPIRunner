@@ -1,20 +1,12 @@
-using BBRAPIModules;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System.Net;
-using System.Threading.Tasks;
-
 namespace BattleBitAPIRunner
 {
   internal class RunnerRestServer
   {
-    private readonly List<RunnerServer> _servers;
     private readonly ILogger<RunnerRestServer> _logger;
     private readonly IServerService _serverService;
 
-    public RunnerRestServer(List<RunnerServer> servers, ILogger<RunnerRestServer> logger, IServerService serverService)
+    public RunnerRestServer(ILogger<RunnerRestServer> logger, IServerService serverService)
     {
-      _servers = servers;
       _logger = logger;
       _serverService = serverService;
     }

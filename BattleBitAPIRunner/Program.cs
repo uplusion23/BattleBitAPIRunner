@@ -40,6 +40,7 @@ namespace BattleBitAPIRunner
             startServerListener();
 
             services.AddSingleton<List<RunnerServer>>();
+            services.AddTransient<Func<List<RunnerServer>>>(serviceProvider => () => this.servers);
             services.AddTransient<RunnerRestServer>();
             services.AddTransient<IServerService, ServerService>();
             services.AddLogging();
@@ -376,6 +377,10 @@ namespace BattleBitAPIRunner
                         throw new Exception($"Not inheriting from {nameof(BattleBitModule)}");
                     }
                     moduleInstance.SetServer(server);
+                    moduleInstance.Id = module.Id;
+                    moduleInstance.Name = module.Name ?? "UnknownModule";
+                    moduleInstance.Author = module.Author;
+                    moduleInstance.Version = module.Version;
                     server.AddModule(moduleInstance);
                     battleBitModules.Add(moduleInstance);
                 }

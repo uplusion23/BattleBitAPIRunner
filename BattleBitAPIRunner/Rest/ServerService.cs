@@ -6,18 +6,18 @@ namespace BattleBitAPIRunner
 {
   public class ServerService : IServerService
   {
-    private readonly List<RunnerServer> _servers;
+    private readonly Func<List<RunnerServer>> _getServers;
     private readonly ILogger<ServerService> _logger;
 
-    public ServerService(List<RunnerServer> servers, ILogger<ServerService> logger)
+    public ServerService(Func<List<RunnerServer>> getServers, ILogger<ServerService> logger)
     {
-      _servers = servers;
+      _getServers = getServers;
       _logger = logger;
     }
 
     public IResult GetRunnerServers()
     {
-      List<RunnerServerDTO> serverDTOs = this._servers.Select(GetServerDTO).ToList();
+      List<RunnerServerDTO> serverDTOs = this._getServers().Select(GetServerDTO).ToList();
       return Results.Ok(serverDTOs);
     }
 
@@ -32,9 +32,14 @@ namespace BattleBitAPIRunner
     public IResult GetServerModules(ulong serverId)
     {
       RunnerServer? foundServer = FindServerByHash(serverId);
-      return (foundServer != null)
-          ? Results.Ok(foundServer.GetModules())
-          : ServerNotFoundResponse(serverId);
+      if (foundServer == null)
+      {
+        return ServerNotFoundResponse(serverId);
+      }
+      else
+      {
+        return Results.Ok(foundServer.GetModules());
+      }
     }
 
     public IResult GetServerModulesById(ulong serverId, string id)
@@ -102,7 +107,7 @@ namespace BattleBitAPIRunner
 
     private RunnerServer? FindServerByHash(ulong serverId)
     {
-      return this._servers.Find(ser => ser.ServerHash == serverId);
+      return this._getServers().Find(ser => ser.ServerHash == serverId);
     }
 
     private Module? FindModuleById(string moduleId)
