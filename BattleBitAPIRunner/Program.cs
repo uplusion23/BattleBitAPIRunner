@@ -34,12 +34,6 @@ namespace BattleBitAPIRunner
 
             loadConfiguration();
             validateConfiguration();
-            Console.WriteLine("Loading dependencies...");
-            loadDependencies();
-            loadModules();
-            hookModules();
-            fileWatchers();
-            startServerListener();
 
             services.AddSingleton<List<RunnerServer>>();
             services.AddTransient<Func<List<RunnerServer>>>(serviceProvider => () => this.servers);
@@ -49,12 +43,16 @@ namespace BattleBitAPIRunner
 
             var serviceProvider = services.BuildServiceProvider();
             var runnerRestServer = serviceProvider.GetService<RunnerRestServer>();
-
-            runnerRestServer.InitializeAsync().Wait();
-
+            runnerRestServer.InitializeAsync();
+            
+            Console.WriteLine("Loading dependencies...");
+            
+            loadDependencies();
+            loadModules();
+            hookModules();
+            fileWatchers();
+            startServerListener();
             consoleCommandHandler();
-
-            Thread.Sleep(-1);
         }
 
         private void fileWatchers()

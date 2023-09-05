@@ -21,8 +21,9 @@ namespace BattleBitAPIRunner
       app.UseDeveloperExceptionPage();
       InitializeEndpoints(app);
 
-      await app.RunAsync("http://*:8080");
-      _logger.LogInformation("Started REST server on port 8080");
+      app.RunAsync("http://*:8080");
+      Console.WriteLine($"Started REST server on port 8080");
+      // _logger.LogInformation("Started REST server on port 8080");
     }
 
     private void InitializeEndpoints(WebApplication app)
