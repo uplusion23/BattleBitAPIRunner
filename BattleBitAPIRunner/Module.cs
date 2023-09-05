@@ -1,4 +1,5 @@
-﻿using BBRAPIModules;
+﻿using BattleBitAPI;
+using BBRAPIModules;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -54,6 +55,53 @@ namespace BattleBitAPIRunner
 
         private SyntaxTree syntaxTree;
         private string code;
+
+        public static void LoadContext(string[] dependencies)
+        {
+            if (baseReferences is null)
+            {
+                loadReferences(dependencies);
+            }
+
+            loadDepedencies(dependencies);
+        }
+
+        private static void loadReferences(string[] dependencies)
+        {
+            List<PortableExecutableReference> references = new()
+            {
+                MetadataReference.CreateFromFile(typeof(BattleBitModule).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Player<>).Assembly.Location),
+            };
+
+            foreach (string dll in Directory.GetFiles(Path.GetDirectoryName(typeof(object).Assembly.Location), "*.dll"))
+            {
+
+                if (!IsAssemblyValidReference(dll))
+                {
+                    continue;
+                }
+
+                references.Add(MetadataReference.CreateFromFile(dll));
+
+            }
+
+            foreach (string dependency in dependencies)
+            {
+
+                references.Add(MetadataReference.CreateFromFile(Path.GetFullPath(dependency)));
+            }
+
+            baseReferences = references.ToArray();
+        }
+
+        private static void loadDepedencies(string[] dependencies)
+        {
+            foreach (string dependency in dependencies)
+            {
+                moduleContext.LoadFromAssemblyPath(Path.GetFullPath(dependency));
+            }
+        }
 
         public static void UnloadContext()
         {
@@ -188,7 +236,9 @@ namespace BattleBitAPIRunner
             modules.Add(this);
         }
 
-        public void Compile()
+        public static PortableExecutableReference[]? baseReferences = null;
+
+        public void Compile(PortableExecutableReference[]? extraReferences = null)
         {
             if (this.AssemblyBytes is not null)
             {
@@ -199,23 +249,26 @@ namespace BattleBitAPIRunner
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine(this.Name);
             Console.ResetColor();
+            List<PortableExecutableReference> references = new(baseReferences);
 
-            List<PortableExecutableReference> refs = new(AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic && !string.IsNullOrWhiteSpace(a.Location)).Select(a => MetadataReference.CreateFromFile(a.Location)));
             foreach (Module module in modules)
             {
                 using (MemoryStream assemblyStream = new(module.AssemblyBytes))
                 {
-                    refs.Add(MetadataReference.CreateFromStream(assemblyStream));
+                    references.Add(MetadataReference.CreateFromStream(assemblyStream));
                 }
             }
-            refs.Add(MetadataReference.CreateFromFile(typeof(DynamicAttribute).Assembly.Location));
-            refs.Add(MetadataReference.CreateFromFile(typeof(Microsoft.CSharp.RuntimeBinder.RuntimeBinderException).Assembly.Location));
+
+            if (extraReferences is not null)
+            {
+                references.AddRange(extraReferences);
+            }
 
             CSharpCompilation compilation = CSharpCompilation.Create(this.Name)
                 .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
                     .WithOptimizationLevel(OptimizationLevel.Debug)
                     .WithPlatform(Platform.AnyCpu))
-                .WithReferences(refs)
+                .WithReferences(references)
                 .AddSyntaxTrees(this.syntaxTree);
 
             using (MemoryStream assemblyStream = new())
@@ -238,6 +291,32 @@ namespace BattleBitAPIRunner
 
                 pdbStream.Seek(0, SeekOrigin.Begin);
                 this.PDBBytes = pdbStream.ToArray();
+            }
+        }
+
+        private static bool IsAssemblyValidReference(string assemblyPath)
+        {
+            try
+            {
+                string code = "class Program { static void Main() { } }";
+
+                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(code);
+                CSharpCompilation compilation = CSharpCompilation.Create(
+                    "TempAssembly",
+                    syntaxTrees: new[] { syntaxTree },
+                    references: new[] { MetadataReference.CreateFromFile(assemblyPath), MetadataReference.CreateFromFile(typeof(object).Assembly.Location) },
+                    options: new CSharpCompilationOptions(OutputKind.ConsoleApplication));
+
+                using (var ms = new MemoryStream())
+                {
+                    EmitResult result = compilation.Emit(ms);
+
+                    return result.Success;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
             }
         }
     }
